@@ -12,6 +12,7 @@
     "ejs": "^2.6.1",
     "express": "^4.16.3",
     "mysql": "^2.15.0",
-    "wechat-api": "^1.35.1"
+    "wechat-api": "^1.35.1",
+    "wechat-oauth": "^1.4.1"
   }
 }

@@ -46,6 +46,16 @@ var wechatApi = new WechatAPI(appId, appSecret, function (callback) {
   fs.writeFile('access_token.txt', JSON.stringify(token), callback)
 });
 
+var OAuth = require('wechat-oauth') 
+var oauthApi = new OAuth(wx.appId, wx.appSecret, function (openid, callback) {
+	  fs.readFile(__dirname+ '/token/'+ openid +'.token.txt', 'utf8', function (err, txt) {
+			if (err) {return callback(err)}
+			callback(null, JSON.parse(txt))
+	  })
+}, function (openid, token, callback) {
+	  fs.writeFile(__dirname+ '/token/'+ openid + '.token.txt', JSON.stringify(token), callback)
+})
+
 /**
  * 发送报警 
  */
@@ -94,9 +104,10 @@ app.get('/', function (req, res) {
 /**
  * 发送报警对外 API 接口
  */
-app.get('/firealarm', function (req, res, next) {
+app.post('/firealarm', function (req, res, next) {
   let token = (req.body.token || '').trim();
   let mobile = (req.body.mobile || '').trim();
+  console.log('token+mobile', token, mobile);
   
   let alarm = {};
   alarm.store = req.body.store || '默认1店';
@@ -104,27 +115,30 @@ app.get('/firealarm', function (req, res, next) {
   alarm.status = req.body.status || '默认参数超标！';
   
   // 验证 token 正确
-  token = '20180516';
-  if( token != '20180516') {
+  if( !token) {
     res.sendStatus(401);
   }
   
+  if( !mobile) {
+    res.sendStatus(500);
+  }
+  
   // 处理批量手机号码
-  mobile = '13011112222,13072168298';
+  //mobile = '13011112222';
   let mobiles = mobile.split(',');
-  let new_mobs = mobiles.map( (m) => {
+  let dry_mobs = mobiles.map( (m) => {
     return m.trim();
   });
-  console.log('new_mobs', new_mobs);
+  console.log('dry_mobs', dry_mobs);
   
   // 查询并发送报警
-  db.query(userSql.getUsersByMobile, [new_mobs], function (err, results) {
+  db.query(userSql.getUsersByMobile, [dry_mobs], function (err, results) {
 			if(err) return	next(err);
       console.log('users:', err, results);
       sendAlarm(alarm, results);
+      
+      res.send('success!');
   });
-  
-  res.send('success!');
 });
 
 app.get('/test', function (req, res) {
