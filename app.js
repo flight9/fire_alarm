@@ -25,8 +25,10 @@ http.createServer(app).listen(3119, function () {
   console.log('Listening on port 3119')
 });
 
-const WX_MSG_URL = '';
-
+/*
+ * 全局变量
+ */
+const WX_MSG_URL = 'http://2whzur.natappfree.cc';
 var users = require('./users');
 
 /**
@@ -97,9 +99,34 @@ function sendAlarm(alarm, users) {
 }
 
 // -- routers ------------------------------------------------------
-app.get('/', function (req, res) {
+app.get('/', function (req, res, next) {
   setTimeout(() => res.end('Hello Fire Alarm!'), Math.random() * 500);
-})
+});
+
+/**
+ * 微信网页入口
+ */
+app.get('/start', function (req, res, next) {
+  var callbackURL = WX_MSG_URL + '/bind';
+  var url = oauthApi.getAuthorizeURL(callbackURL,'state','snsapi_base');
+  res.redirect(url);
+});
+
+app.get('/bind', function (req, res, next) {
+  var code = req.query.code 
+  if(!code)  return res.sendStatus(401);
+	
+	oauthApi.getAccessToken(code, function (err, result) {
+    //console.log('getAccessToken', err, result);
+    if(err)  return next(err);
+    
+    let openid = result.data.openid;
+    if(!openid)  return res.sendStatus(401);
+    
+    res.send('openid:'+ result.data.openid);
+  });
+});
+
 
 /**
  * 发送报警对外 API 接口
@@ -107,7 +134,7 @@ app.get('/', function (req, res) {
 app.post('/firealarm', function (req, res, next) {
   let token = (req.body.token || '').trim();
   let mobile = (req.body.mobile || '').trim();
-  console.log('token+mobile', token, mobile);
+  console.log('token & mobile:', token, mobile);
   
   let alarm = {};
   alarm.store = req.body.store || '默认1店';
