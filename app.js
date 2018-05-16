@@ -119,14 +119,21 @@ app.get('/bind', function (req, res, next) {
 	oauthApi.getAccessToken(code, function (err, result) {
     //console.log('getAccessToken', err, result);
     if(err)  return next(err);
-    
     let openid = result.data.openid;
-    if(!openid)  return res.sendStatus(401);
+    if(!openid)  return res.status(401).send('微信id获取错误！');
     
-    res.send('openid:'+ result.data.openid);
+    db.query(userSql.getUserByOpenid, [openid], function (err, users) {
+      console.log('users:', err, users);
+			if(err) return	next(err);
+      
+      let bound = (users.length > 0);
+      let mobile = bound? users[0].mobile: '';
+      
+      res.send('success!');
+    });
+    
   });
 });
-
 
 /**
  * 发送报警对外 API 接口
@@ -160,8 +167,8 @@ app.post('/firealarm', function (req, res, next) {
   
   // 查询并发送报警
   db.query(userSql.getUsersByMobile, [dry_mobs], function (err, results) {
+      //console.log('users:', err, results);
 			if(err) return	next(err);
-      console.log('users:', err, results);
       sendAlarm(alarm, results);
       
       res.send('success!');
