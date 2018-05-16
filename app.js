@@ -4,8 +4,14 @@ const http = require('http')
 const os = require('os')
 const path = require('path');
 const bodyParser = require('body-parser');
+const mysql = require('mysql');
 
-const app = express()
+// setup Mysql
+var config = require('./db/config');
+var userSql = require('./db/user_sql');
+var db = mysql.createConnection(config.mysql);
+
+const app = express();
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
@@ -85,25 +91,40 @@ app.get('/', function (req, res) {
   setTimeout(() => res.end('Hello Fire Alarm!'), Math.random() * 500);
 })
 
-app.get('/firealarm', function (req, res) {
+/**
+ * 发送报警对外 API 接口
+ */
+app.get('/firealarm', function (req, res, next) {
   let token = (req.body.token || '').trim();
   let mobile = (req.body.mobile || '').trim();
-  let store = req.body.store || '默认1店';
-  let device = req.body.device || '默认设备';
-  let status = req.body.status || '默认参数超标！';
   
-  if( false) {
-    res.sendStatus(400);
+  let alarm = {};
+  alarm.store = req.body.store || '默认1店';
+  alarm.device = req.body.device || '默认设备';
+  alarm.status = req.body.status || '默认参数超标！';
+  
+  // 验证 token 正确
+  token = '20180516';
+  if( token != '20180516') {
+    res.sendStatus(401);
   }
   
-  mobile = '139,159,179';
+  // 处理批量手机号码
+  mobile = '13011112222,13072168298';
   let mobiles = mobile.split(',');
-  console.log(mobiles);
-  mobiles.forEach( (m) => {
-    m = m.trim();
+  let new_mobs = mobiles.map( (m) => {
+    return m.trim();
+  });
+  console.log('new_mobs', new_mobs);
+  
+  // 查询并发送报警
+  db.query(userSql.getUsersByMobile, [new_mobs], function (err, results) {
+			if(err) return	next(err);
+      console.log('users:', err, results);
+      sendAlarm(alarm, results);
   });
   
-  res.send('done!');
+  res.send('success!');
 });
 
 app.get('/test', function (req, res) {
@@ -116,3 +137,20 @@ app.get('/test', function (req, res) {
   res.send('test');
 });
 
+// catch 404 and forward to error handler
+app.use(function(req, res, next) {
+  var err = new Error('Not Found');
+  err.status = 404;
+  next(err);
+});
+
+// error handler
+app.use(function(err, req, res, next) {
+  // set locals, only providing error in development
+  res.locals.message = err.message;
+  res.locals.error = req.app.get('env') === 'development' ? err : {};
+
+  // render the error page
+  res.status(err.status || 500);
+  res.render('error');
+});
