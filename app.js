@@ -123,7 +123,7 @@ app.get('/bind', function (req, res, next) {
     let openid = result.data.openid;
     if(!openid)  return res.status(401).send('微信id获取错误！');
     
-    // 查询用户是否已经绑定
+    // 查询用户绑定
     db.query(userSql.getUserByOpenid, [openid], function (err, users) {
       console.log('users:', err, users);
 			if(err) return	next(err);
@@ -131,7 +131,7 @@ app.get('/bind', function (req, res, next) {
       let bound = (users.length > 0);
       let mobile = bound? users[0].mobile: '';
       
-      res.send('success!');
+      res.render('bind', {bound, mobile});
     });
     
   });

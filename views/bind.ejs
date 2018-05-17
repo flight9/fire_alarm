@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>消防报警通知设置</title>
+
+    <!-- Bootstrap -->
+    <link href="https://cdn.bootcss.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet">
+  </head>
+  <body>
+
+	<div class="container">
+		<form class="form-horizontal" action="" method="post">
+			<fieldset>
+				<div id="legend" class="">
+					<legend class=""><%-bound?"解绑":"绑定"%>手机</legend>
+				</div>
+				
+				<div class="form-group">
+					<label class="col-sm-4 control-label">手机号码</label>
+					<div class="col-sm-8">
+						<input type="text" class="form-control" id="mobile" name="mobile" placeholder="请输入手机号码"
+							value="<%=mobile%>" disabled="<%-bound%>" />
+					</div>
+				</div>
+				
+				<div class="form-group">
+					<label class="col-sm-4 control-label">短信验证码</label>
+					<div class="col-sm-8">
+						<div class="row">
+							<div class="col-xs-8">
+							<input type="text" class="form-control" id="captcha" name="captcha" placeholder="请输入验证码">
+							</div>
+							<div class="col-xs-3">
+							<button class="btn btn-info" type="button" id="btn-captcha">发送验证码</button>
+							</div>
+						</div>
+					</div>
+				</div>
+				
+				<div>
+					<input type="hidden" name="bound" value="<%-bound%>">
+				</div>
+
+				<div class="form-group">
+					<label class="col-sm-4 control-label"></label>
+					<div class="col-sm-8">
+						<button type="submit" class="btn btn-success" onclick="return validForm()"><%-bound?"解绑":"绑定"%></button>
+					</div>
+				</div>
+
+			</fieldset>
+		</form>
+	<div>
+	
+		<!-- jQuery (Bootstrap 的所有 JavaScript 插件都依赖 jQuery，所以必须放在前边) -->
+    <script src="https://cdn.bootcss.com/jquery/1.12.4/jquery.min.js"></script>
+    <!-- 加载 Bootstrap 的所有 JavaScript 插件。你也可以根据需要只加载单个插件。 -->
+    <script src="https://cdn.bootcss.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+		
+		<script type="text/javascript">
+			const WAIT_SECS = 6;
+			var seconds = 0, timer = 0;
+			$(function() {
+				$('#btn-captcha').click(function(){
+					var mobile = $('#mobile').val();
+					if(!validMobile(mobile)) {
+						alert('错误: 手机号码格式有误,请更正！');
+						return;
+					}
+					$('#btn-captcha').prop('disabled', true);
+					timer = setInterval(updateButton, 1000);
+				});
+			});
+			
+			function validMobile(number) {
+				if(!number) return false;
+				return (/(^(13\d|15[^4,\D]|17[13678]|18\d)\d{8}|170[^346,\D]\d{7})$/.test(number));
+			}
+			
+			function updateButton() {
+				seconds++;
+				if( seconds< WAIT_SECS) {
+					$('#btn-captcha').text('等待('+ (WAIT_SECS-seconds)+ ')s');
+				} 
+				else {
+					seconds = 0; clearInterval(timer);
+					$('#btn-captcha').text('发送验证码');
+					$('#btn-captcha').prop('disabled', false);
+				}
+			}
+			
+			function validForm() {
+				var mobile = $('#mobile').val();
+				var captcha = $('#captcha').val();
+				if(!validMobile(mobile)) {
+					alert('错误: 手机号码格式有误,请更正！');
+					return false;
+				}
+				/*
+				if(!captcha || captcha.length<4) {
+					alert('错误: 验证码格式有误,请更正！');
+					return false;
+				}*/
+				return true;
+			}
+			
+		</script>
+  </body>
+</html>
