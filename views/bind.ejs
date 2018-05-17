@@ -62,7 +62,7 @@
     <script src="/js/bootstrap.min.js"></script>
 		
 		<script type="text/javascript">
-			const WAIT_SECS = 6;
+			const WAIT_SECS = 60;
 			var seconds = 0, timer = 0;
 			$(function() {
 				$('#btn-captcha').click(function(){
@@ -71,8 +71,17 @@
 						alert('错误: 手机号码格式有误,请更正！');
 						return;
 					}
-					$('#btn-captcha').prop('disabled', true);
-					timer = setInterval(updateButton, 1000);
+					$.ajax({
+						url: '/sendsms',
+						type: 'post',
+						data: {mobile: mobile},
+						dataType: 'json',
+						success: function(result) {
+							$('#btn-captcha').prop('disabled', true);
+							timer = setInterval(updateButton, 1000);
+							console.log('ajax', result);
+						}
+					});
 				});
 			});
 			

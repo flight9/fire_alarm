@@ -27,7 +27,7 @@ http.createServer(app).listen(3119, function () {
   console.log('Listening on port 3119')
 });
 
-/*
+/**
  * 全局变量
  */
 const WX_MSG_URL = 'http://2whzur.natappfree.cc';
@@ -100,6 +100,14 @@ function sendAlarm(alarm, users) {
   });
 }
 
+/**
+ * 验证手机号码格式
+ */
+function validMobile(number) {
+  if(!number) return false;
+  return (/(^(13\d|15[^4,\D]|17[13678]|18\d)\d{8}|170[^346,\D]\d{7})$/.test(number));
+}
+
 // -- routers ------------------------------------------------------
 app.get('/', function (req, res, next) {
   setTimeout(() => res.end('Hello Fire Alarm!'), Math.random() * 500);
@@ -151,7 +159,7 @@ app.post('/bind', function (req, res, next) {
   console.log('tobind & mobile & captcha:', tobind, mobile, captcha);
   
   // TODO: VALID captcha + mobile + openid
-  if(!/(^(13\d|15[^4,\D]|17[13678]|18\d)\d{8}|170[^346,\D]\d{7})$/.test(mobile)) {
+  if(!validMobile(mobile)) {
     let err = '手机号格式错误';
     res.redirect('/result?ok=0&err='+err);
   }
@@ -194,10 +202,25 @@ app.post('/bind', function (req, res, next) {
   }
 });
 
+/**
+ * 操作结果
+ */
 app.get('/result', function (req, res, next) {
   let ok = req.query.ok > 0? true: false;
   let err = req.query.err || '未知错误';
   res.render('result', {ok, err});
+});
+
+/**
+ * 发送验证码
+ */
+app.post('/sendsms', function (req, res, next) {
+  let mobile = (req.body.mobile || '').trim();
+  if(!validMobile(mobile)) {
+    return res.json({err:101, msg:'手机号码格式错误'});
+  }
+  
+  res.json({err:0, msg:'ok'});
 });
 
 /**
