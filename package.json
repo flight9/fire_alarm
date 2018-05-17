@@ -9,6 +9,7 @@
   "author": "liang",
   "license": "ISC",
   "dependencies": {
+    "@alicloud/sms-sdk": "^1.1.1",
     "ejs": "^2.6.1",
     "express": "^4.16.3",
     "mysql": "^2.15.0",

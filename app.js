@@ -5,6 +5,7 @@ const os = require('os')
 const path = require('path');
 const bodyParser = require('body-parser');
 const mysql = require('mysql');
+const SMSClient = require('@alicloud/sms-sdk');
 
 // setup Mysql
 var config = require('./db/config');
@@ -261,14 +262,33 @@ app.post('/sendsms', function (req, res, next) {
   // let captcha = '1234';
   let captcha = random(4);
   
-  //TODO invoke sms send
+  // ALI sendSMS
+  const ali = require('./aliconfig');
+  const accessKeyId = ali.AccessKeyID;
+  const secretAccessKey = ali.AccessKeySecret;
+  let smsClient = new SMSClient({accessKeyId, secretAccessKey});
   
+  smsClient.sendSMS({
+    PhoneNumbers: mobile,
+    SignName: '倍省提醒',
+    TemplateCode: 'SMS_135026027',
+    TemplateParam: '{"code":"'+ captcha +'"}'
+  }).then(function (result) {
+    let {Code}=result;
+    if (Code === 'OK') {
+      res.json({err:0, msg:'ok'});
+    }
+  }).catch(function (err) {
+    console.log('sendSMS err:', err);
+    res.json({err:err.data.Code, msg:err.data.Message});
+  });
+  
+  // Save to db
   db.query(captchaSql.upsert, [mobile,captcha,expire,captcha,expire], function (err, results) {
     console.log('results', err, results);
     if(err) return next(err);
   });
   
-  res.json({err:0, msg:'ok'});
 });
 
 /**
