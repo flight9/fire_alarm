@@ -20,6 +20,7 @@ app.set('view engine', 'ejs');
 app.use(bodyParser.urlencoded({    
   extended: false
 }));
+app.use(bodyParser.json());
 
 http.createServer(app).listen(3119, function () {
   console.log('Listening on port 3119')
@@ -122,6 +123,7 @@ app.get('/bind', function (req, res, next) {
     let openid = result.data.openid;
     if(!openid)  return res.status(401).send('微信id获取错误！');
     
+    // 查询用户是否已经绑定
     db.query(userSql.getUserByOpenid, [openid], function (err, users) {
       console.log('users:', err, users);
 			if(err) return	next(err);
