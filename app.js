@@ -113,6 +113,9 @@ app.get('/start', function (req, res, next) {
   res.redirect(url);
 });
 
+/**
+ * 绑定表单
+ */
 app.get('/bind', function (req, res, next) {
   var code = req.query.code 
   if(!code)  return res.sendStatus(401);
@@ -125,7 +128,7 @@ app.get('/bind', function (req, res, next) {
     
     // 查询用户绑定
     db.query(userSql.getUserByOpenid, [openid], function (err, users) {
-      console.log('users:', err, users);
+      //console.log('users:', err, users);
 			if(err) return	next(err);
       
       let bound = (users.length > 0);
@@ -135,6 +138,42 @@ app.get('/bind', function (req, res, next) {
     });
     
   });
+});
+
+/**
+ * 绑定表单(提交)
+ */
+app.post('/bind', function (req, res, next) {
+  let tobind = (req.body.tobind == 'true');
+  let mobile = (req.body.mobile || '').trim();
+  let captcha = (req.body.captcha || '').trim();
+  console.log('tobind & mobile & captcha:', tobind, mobile, captcha);
+  
+  // TODO: VALID CAPTCHA + MOBILE
+  
+  if(tobind) {
+    db.query(userSql.getUserByMobile, [mobile], function (err, users) {});
+    res.send('post');
+  }
+  else {
+    db.query(userSql.delUserByMobile, [mobile], function (err, okPacket) {
+      //console.log('okPacket', err, okPacket);
+      if( okPacket.affectedRows == 1) {
+        res.redirect('/result?ok=1');
+      }
+      else {
+        res.redirect('/result?ok=0');
+      }
+    });
+  }
+  
+  
+});
+
+app.get('/result', function (req, res, next) {
+  let ok = req.query.ok > 0? true: false;
+  let err = parseInt(req.query.err) || 0;
+  res.render('result', {ok,err});
 });
 
 /**

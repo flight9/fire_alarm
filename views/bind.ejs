@@ -22,7 +22,7 @@
 					<label class="col-sm-4 control-label">手机号码</label>
 					<div class="col-sm-8">
 						<input type="text" class="form-control" id="mobile" name="mobile" placeholder="请输入手机号码"
-							value="<%=mobile%>" disabled="<%-bound%>" />
+							value="<%=mobile%>" <%-bound?"readonly":""%> />
 					</div>
 				</div>
 				
@@ -41,7 +41,7 @@
 				</div>
 				
 				<div>
-					<input type="hidden" name="bound" value="<%-bound%>">
+					<input type="hidden" name="tobind" value="<%-!bound%>">
 				</div>
 
 				<div class="form-group">
