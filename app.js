@@ -9,6 +9,7 @@ const mysql = require('mysql');
 // setup Mysql
 var config = require('./db/config');
 var userSql = require('./db/user_sql');
+var captchaSql = require('./db/captcha_sql');
 var db = mysql.createConnection(config.mysql);
 
 const app = express();
@@ -108,6 +109,18 @@ function validMobile(number) {
   return (/(^(13\d|15[^4,\D]|17[13678]|18\d)\d{8}|170[^346,\D]\d{7})$/.test(number));
 }
 
+/**
+ * 计算随机验证码
+ */
+function random(len) {
+  len = len || 4;
+  var num = "";
+  for (i = 0; i < len; i++) {
+    num = num + Math.floor(Math.random() * 10);
+  }
+  return num;
+}
+
 // -- routers ------------------------------------------------------
 app.get('/', function (req, res, next) {
   setTimeout(() => res.end('Hello Fire Alarm!'), Math.random() * 500);
@@ -158,48 +171,72 @@ app.post('/bind', function (req, res, next) {
   let openid = (req.body.openid || '').trim();
   console.log('tobind & mobile & captcha:', tobind, mobile, captcha);
   
-  // TODO: VALID captcha + mobile + openid
+  // VALID mobile + openid
   if(!validMobile(mobile)) {
-    let err = '手机号格式错误';
-    res.redirect('/result?ok=0&err='+err);
+    let error = '手机号格式错误';
+    return res.redirect('/result?ok=0&err='+error);
+  }
+  else if(!openid || !captcha) {
+    let error = '微信id丢失或没有验证码';
+    return res.redirect('/result?ok=0&err='+error);
   }
   
-  if(tobind) {
-    db.query(userSql.getUserByMobile, [mobile], function (err, results) {
-      //console.log('results', err, results);
-      if(err) return next(err);
-      if(results.length > 0) {
-        let error = '该手机号已被绑定过';
-        res.redirect('/result?ok=0&err='+error);
-      }
-      else {
-        db.query(userSql.create, [mobile, openid], function (err, okPacket) {
-          //console.log('okPacket', err, okPacket);
-          if(err) return next(err);
-          if( okPacket.affectedRows == 1) {
-            res.redirect('/result?ok=1');
-          }
-          else {
-            let error = '数据库插入错误';
-            res.redirect('/result?ok=0&err='+error);
-          }
-        });
-      }
-    });
-  }
-  else {
-    db.query(userSql.delUserByMobile, [mobile], function (err, okPacket) {
-      //console.log('okPacket', err, okPacket);
-      if(err) return next(err);
-      if( okPacket.affectedRows == 1) {
-        res.redirect('/result?ok=1');
-      }
-      else {
-        let error = '数据库删除错误';
-        res.redirect('/result?ok=0&err='+error);
-      }
-    });
-  }
+  // VALID captcha
+  db.query(captchaSql.getCaptcha, [mobile,captcha], function (err, results) {
+    console.log('results', err, results);
+    if(err) return next(err);    
+    if(!results.length) {
+      let error = '验证码无效';
+      return res.redirect('/result?ok=0&err='+error);
+    }
+    
+    let is_expire = (new Date(results[0].expire*1000)) < (new Date());
+    if( is_expire) {
+      let error = '验证码过期';
+      return res.redirect('/result?ok=0&err='+error);
+    }
+    
+    // Bind or Unbind
+    if(tobind) {
+      db.query(userSql.getUserByMobile, [mobile], function (err, results) {
+        //console.log('results', err, results);
+        if(err) return next(err);
+        if(results.length > 0) {
+          let error = '该手机号已被绑定过';
+          res.redirect('/result?ok=0&err='+error);
+        }
+        else {
+          db.query(userSql.create, [mobile, openid], function (err, okPacket) {
+            //console.log('okPacket', err, okPacket);
+            if(err) return next(err);
+            if( okPacket.affectedRows == 1) {
+              res.redirect('/result?ok=1');
+            }
+            else {
+              let error = '数据库插入错误';
+              res.redirect('/result?ok=0&err='+error);
+            }
+          });
+        }
+      });
+    }
+    else {
+      db.query(userSql.delUserByMobile, [mobile], function (err, okPacket) {
+        //console.log('okPacket', err, okPacket);
+        if(err) return next(err);
+        if( okPacket.affectedRows == 1) {
+          res.redirect('/result?ok=1');
+        }
+        else {
+          let error = '数据库删除错误';
+          res.redirect('/result?ok=0&err='+error);
+        }
+      });
+    }
+    
+  });
+  
+  return;
 });
 
 /**
@@ -219,6 +256,17 @@ app.post('/sendsms', function (req, res, next) {
   if(!validMobile(mobile)) {
     return res.json({err:101, msg:'手机号码格式错误'});
   }
+  
+  let expire = parseInt(new Date().getTime()/1000) + 5*60;
+  // let captcha = '1234';
+  let captcha = random(4);
+  
+  //TODO invoke sms send
+  
+  db.query(captchaSql.upsert, [mobile,captcha,expire,captcha,expire], function (err, results) {
+    console.log('results', err, results);
+    if(err) return next(err);
+  });
   
   res.json({err:0, msg:'ok'});
 });
