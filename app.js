@@ -129,12 +129,11 @@ app.get('/bind', function (req, res, next) {
     // 查询用户绑定
     db.query(userSql.getUserByOpenid, [openid], function (err, users) {
       //console.log('users:', err, users);
-			if(err) return	next(err);
-      
+			if(err) return next(err);
       let bound = (users.length > 0);
       let mobile = bound? users[0].mobile: '';
       
-      res.render('bind', {bound, mobile});
+      res.render('bind', {bound, mobile, openid});
     });
     
   });
@@ -147,33 +146,57 @@ app.post('/bind', function (req, res, next) {
   let tobind = (req.body.tobind == 'true');
   let mobile = (req.body.mobile || '').trim();
   let captcha = (req.body.captcha || '').trim();
+  let openid = (req.body.openid || '').trim();
   console.log('tobind & mobile & captcha:', tobind, mobile, captcha);
   
-  // TODO: VALID CAPTCHA + MOBILE
+  // TODO: VALID captcha + mobile + openid
+  if(!/(^(13\d|15[^4,\D]|17[13678]|18\d)\d{8}|170[^346,\D]\d{7})$/.test(mobile)) {
+    let err = '手机号格式错误';
+    res.redirect('/result?ok=0&err='+err);
+  }
   
   if(tobind) {
-    db.query(userSql.getUserByMobile, [mobile], function (err, users) {});
-    res.send('post');
+    db.query(userSql.getUserByMobile, [mobile], function (err, results) {
+      //console.log('results', err, results);
+      if(err) return next(err);
+      if(results.length > 0) {
+        let error = '该手机号已被绑定过';
+        res.redirect('/result?ok=0&err='+error);
+      }
+      else {
+        db.query(userSql.create, [mobile, openid], function (err, okPacket) {
+          //console.log('okPacket', err, okPacket);
+          if(err) return next(err);
+          if( okPacket.affectedRows == 1) {
+            res.redirect('/result?ok=1');
+          }
+          else {
+            let error = '数据库插入错误';
+            res.redirect('/result?ok=0&err='+error);
+          }
+        });
+      }
+    });
   }
   else {
     db.query(userSql.delUserByMobile, [mobile], function (err, okPacket) {
       //console.log('okPacket', err, okPacket);
+      if(err) return next(err);
       if( okPacket.affectedRows == 1) {
         res.redirect('/result?ok=1');
       }
       else {
-        res.redirect('/result?ok=0');
+        let error = '数据库删除错误';
+        res.redirect('/result?ok=0&err='+error);
       }
     });
   }
-  
-  
 });
 
 app.get('/result', function (req, res, next) {
   let ok = req.query.ok > 0? true: false;
-  let err = parseInt(req.query.err) || 0;
-  res.render('result', {ok,err});
+  let err = req.query.err || '未知错误';
+  res.render('result', {ok, err});
 });
 
 /**

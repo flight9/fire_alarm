@@ -1,5 +1,5 @@
 var userSQL = {  
-  insert:'INSERT INTO users(username,password,date,type,openid) VALUES(?,?,?,?,?)', 
+  create:'INSERT INTO users(mobile,openid) VALUES(?,?)', 
   queryAll:'SELECT * FROM users',  
   getUserByOpenid:'SELECT * FROM users WHERE openid = ?', 
   getUserByMobile:'SELECT * FROM users WHERE mobile = ? ', 
