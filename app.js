@@ -32,6 +32,7 @@ http.createServer(app).listen(3119, function () {
 /**
  * 全局变量
  */
+//oW6aH0fY6upkzy6H9OA70WC3pclI (lmm)
 const WX_MSG_URL = 'http://2whzur.natappfree.cc';
 var users = require('./users');
 
@@ -170,7 +171,7 @@ app.post('/bind', function (req, res, next) {
   let mobile = (req.body.mobile || '').trim();
   let captcha = (req.body.captcha || '').trim();
   let openid = (req.body.openid || '').trim();
-  console.log('tobind & mobile & captcha:', tobind, mobile, captcha);
+  //console.log('tobind & mobile & captcha:', tobind, mobile, captcha);
   
   // VALID mobile + openid
   if(!validMobile(mobile)) {
@@ -183,10 +184,10 @@ app.post('/bind', function (req, res, next) {
   }
   
   // VALID captcha
-  db.query(captchaSql.getCaptcha, [mobile,captcha], function (err, results) {
+  db.query(captchaSql.getByMobile, [mobile], function (err, results) {
     // console.log('results', err, results);
     if(err) return next(err);    
-    if(!results.length) {
+    if(!results.length || results[0].captcha != captcha) {
       let error = '验证码无效';
       return res.redirect('/result?ok=0&err='+error);
     }
@@ -211,6 +212,7 @@ app.post('/bind', function (req, res, next) {
             //console.log('okPacket', err, okPacket);
             if(err) return next(err);
             if( okPacket.affectedRows == 1) {
+              console.log('Bind mobile: '+ mobile);
               res.redirect('/result?ok=1');
             }
             else {
@@ -226,6 +228,7 @@ app.post('/bind', function (req, res, next) {
         //console.log('okPacket', err, okPacket);
         if(err) return next(err);
         if( okPacket.affectedRows == 1) {
+          console.log('Unbind mobile: '+ mobile);
           res.redirect('/result?ok=1');
         }
         else {
@@ -259,8 +262,7 @@ app.post('/sendsms', function (req, res, next) {
   }
   
   let expire = parseInt(new Date().getTime()/1000) + 5*60;
-  // let captcha = '1234';
-  let captcha = random(4);
+  let captcha = random(4); //'1234'
   
   // ALI sendSMS
   const ali = require('./aliconfig');
@@ -274,6 +276,7 @@ app.post('/sendsms', function (req, res, next) {
     TemplateCode: 'SMS_135026027',
     TemplateParam: '{"code":"'+ captcha +'"}'
   }).then(function (result) {
+    //console.log('sendSMS res:', result);
     let {Code}=result;
     if (Code === 'OK') {
       res.json({err:0, msg:'ok'});
