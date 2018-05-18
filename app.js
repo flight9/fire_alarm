@@ -161,7 +161,7 @@ app.get('/start', function (req, res, next) {
  * 绑定表单
  */
 app.get('/bind', function (req, res, next) {
-  var code = req.query.code 
+  var code = req.query.code;
   if(!code)  return res.sendStatus(401);
 	
 	oauthApi.getAccessToken(code, function (err, result) {
