@@ -5,7 +5,8 @@
 ```
 module.exports = {
   appId: 'xxxx',
-  appSecret: 'xxxxx'
+  appSecret: 'xxxxx',
+  tmpIdFireAlarm: 'xxxxx',
 };
 ```
 - aliconfig.js 格式

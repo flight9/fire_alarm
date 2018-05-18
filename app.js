@@ -34,7 +34,8 @@ http.createServer(app).listen(3119, function () {
  * 全局变量
  */
 //oW6aH0fY6upkzy6H9OA70WC3pclI (lmm)
-const WX_MSG_URL = 'http://2whzur.natappfree.cc';
+const WX_WEB_URL = 'http://2whzur.natappfree.cc';
+const WX_MSG_URL = 'http://qq.com';
 const MAX_SMS_COUNT = 10;
 var users = require('./users');
 
@@ -150,7 +151,7 @@ app.get('/', function (req, res, next) {
  * 微信网页入口
  */
 app.get('/start', function (req, res, next) {
-  var callbackURL = WX_MSG_URL + '/bind';
+  var callbackURL = WX_WEB_URL + '/bind';
   var url = oauthApi.getAuthorizeURL(callbackURL,'state','snsapi_base');
   res.redirect(url);
 });
