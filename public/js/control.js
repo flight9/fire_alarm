@@ -17,7 +17,10 @@ $(function() {
       success: function(result) {
         $('#btn-captcha').prop('disabled', true);
         timer = setInterval(updateButton, 1000);
-        console.log('ajax', result);
+        console.log('sendsms:', result);
+        if(result.err != 0) {
+          alert(result.msg);
+        }
       }
     });
   });
