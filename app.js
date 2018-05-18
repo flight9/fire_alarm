@@ -35,7 +35,14 @@ http.createServer(app).listen(3119, function () {
  */
 //oW6aH0fY6upkzy6H9OA70WC3pclI (lmm)
 const WX_MSG_URL = 'http://2whzur.natappfree.cc';
+const MAX_SMS_COUNT = 10;
 var users = require('./users');
+
+// ALI smsClient
+const ali = require('./aliconfig');
+const accessKeyId = ali.AccessKeyID;
+const secretAccessKey = ali.AccessKeySecret;
+const smsClient = new SMSClient({accessKeyId, secretAccessKey});
 
 /**
  * 定时清理
@@ -272,35 +279,42 @@ app.post('/sendsms', function (req, res, next) {
     return res.json({err:101, msg:'手机号码格式错误'});
   }
   
-  let expire = parseInt(new Date().getTime()/1000) + 5*60;
-  let captcha = random(4); //'1234'
-  
-  // ALI sendSMS
-  const ali = require('./aliconfig');
-  const accessKeyId = ali.AccessKeyID;
-  const secretAccessKey = ali.AccessKeySecret;
-  let smsClient = new SMSClient({accessKeyId, secretAccessKey});
-  
-  smsClient.sendSMS({
-    PhoneNumbers: mobile,
-    SignName: '倍省提醒',
-    TemplateCode: 'SMS_135026027',
-    TemplateParam: '{"code":"'+ captcha +'"}'
-  }).then(function (result) {
-    //console.log('sendSMS res:', result);
-    let {Code}=result;
-    if (Code === 'OK') {
-      res.json({err:0, msg:'ok'});
-    }
-  }).catch(function (err) {
-    console.log('sendSMS err:', err);
-    res.json({err:err.data.Code, msg:err.data.Message});
-  });
-  
-  // Save to db
-  db.query(captchaSql.upsert, [mobile,captcha,expire,captcha,expire], function (err, results) {
+  db.query(captchaSql.getByMobile, [mobile], function (err, results) {
     //console.log('results', err, results);
     if(err) return next(err);
+    
+    // 限制条数
+    let expire = parseInt(new Date().getTime()/1000) + 5*60;
+    let captcha = random(4); //'1234'
+    let count = (!results.length)? 0: results[0].count;
+    console.log('sms', mobile, 'count', count);
+    if( ++count > MAX_SMS_COUNT) {
+      return res.json({err:102, msg:'短消息发送次数过多'});
+    }
+    
+    // 短信发送
+    smsClient.sendSMS({
+      PhoneNumbers: mobile,
+      SignName: '倍省提醒',
+      TemplateCode: 'SMS_135026027',
+      TemplateParam: '{"code":"'+ captcha +'"}'
+    }).then(function (result) {
+      //console.log('sendSMS res:', result);
+      let {Code}=result;
+      if (Code === 'OK') {
+        res.json({err:0, msg:'ok'});
+      }
+      
+      // 插入更新db
+      db.query(captchaSql.upsert, [mobile,captcha,expire,captcha,expire,count], function (err, results) {
+        //console.log('results', err, results);
+        if(err) return next(err);
+      });
+    }).catch(function (err) {
+      console.log('sendSMS err:', err);
+      res.json({err:err.data.Code, msg:err.data.Message});
+    });
+
   });
   
 });
