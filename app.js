@@ -337,11 +337,11 @@ app.post('/firealarm', function (req, res, next) {
   
   // 验证 token 正确
   if( token != '20180516') {
-    res.sendStatus(401);
+    return res.sendStatus(401);
   }
   
   if( !mobile) {
-    res.sendStatus(500);
+    return res.sendStatus(500);
   }
   
   // 处理批量手机号码
@@ -350,15 +350,14 @@ app.post('/firealarm', function (req, res, next) {
   let dry_mobs = mobiles.map( (m) => {
     return m.trim();
   });
-  console.log('dry_mobs', dry_mobs);
+  //console.log('dry_mobs', dry_mobs);
   
   // 查询并发送报警
   db.query(userSql.getUsersByMobile, [dry_mobs], function (err, users) {
-      //console.log('users:', err, users);
-			if(err) return	next(err);
-      sendAlarm(alarm, users);
-      
-      res.send('success!');
+    //console.log('users:', err, users);
+    if(err) return	next(err);
+    sendAlarm(alarm, users);
+    res.send('success!');
   });
 });
 
