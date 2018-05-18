@@ -6,6 +6,7 @@ const path = require('path');
 const bodyParser = require('body-parser');
 const mysql = require('mysql');
 const SMSClient = require('@alicloud/sms-sdk');
+const schedule = require('node-schedule');
 
 // setup Mysql
 var config = require('./db/config');
@@ -35,6 +36,16 @@ http.createServer(app).listen(3119, function () {
 //oW6aH0fY6upkzy6H9OA70WC3pclI (lmm)
 const WX_MSG_URL = 'http://2whzur.natappfree.cc';
 var users = require('./users');
+
+/**
+ * 定时清理
+ */
+var j = schedule.scheduleJob('5 2 * * *', function(){
+  console.log('Schedule run at', new Date().toLocaleString(), '-----------');
+  db.query(captchaSql.delExpire, [], function (err, results) {
+    console.log('DelExpire', err, results);
+  });
+});
 
 /**
  * 微信 API 初始化
