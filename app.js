@@ -35,7 +35,7 @@ http.createServer(app).listen(3119, function () {
  */
 //oW6aH0fY6upkzy6H9OA70WC3pclI (lmm)
 const WX_WEB_URL = 'http://2whzur.natappfree.cc';
-const WX_MSG_URL = 'http://qq.com';
+const WX_MSG_URL = 'http://weixin.qq.com';
 const MAX_SMS_COUNT = 10;
 var users = require('./users');
 
@@ -94,9 +94,10 @@ function sendAlarm(alarm, users) {
     
     var templateId = wx.tmpIdFireAlarm;
     var url = WX_MSG_URL;
+    var time = alarm.time || new Date().toLocaleString();
     var data = {
       "first":{
-       "value": '你好, 报警时间 '+ alarm.time,
+       "value": '你好, 报警时间 '+ time,
        "color": "#173177"
        },
        "keyword1":{
@@ -332,7 +333,7 @@ app.post('/firealarm', function (req, res, next) {
   alarm.store = req.body.store || '默认1店';
   alarm.device = req.body.device || '默认设备';
   alarm.status = req.body.status || '默认参数超标！';
-  alarm.time = req.body.time || new Date().toLocaleString();
+  alarm.time = req.body.time;
   
   // 验证 token 正确
   if( token != '20180516') {
