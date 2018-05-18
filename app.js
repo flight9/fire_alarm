@@ -91,11 +91,11 @@ function sendAlarm(alarm, users) {
   users.forEach( function(user) {
     if(!user.openid)  return;
     
-    var templateId = 'RPmErW1apaSAmAy9oyTF0bM27-b4iKPCmpUHCICkH6E';
+    var templateId = wx.tmpIdFireAlarm;
     var url = WX_MSG_URL;
     var data = {
       "first":{
-       "value": '报警内容',
+       "value": '你好, 报警时间 '+ alarm.time,
        "color": "#173177"
        },
        "keyword1":{
@@ -331,6 +331,7 @@ app.post('/firealarm', function (req, res, next) {
   alarm.store = req.body.store || '默认1店';
   alarm.device = req.body.device || '默认设备';
   alarm.status = req.body.status || '默认参数超标！';
+  alarm.time = req.body.time || new Date().toLocaleString();
   
   // 验证 token 正确
   if( token != '20180516') {
@@ -364,6 +365,7 @@ app.get('/test', function (req, res) {
     store: 'TEST1店',
     device: 'TEST压缩机',
     status: 'TEST压力报警',
+    time: new Date().toLocaleString(),
   };
   sendAlarm(alarm, users);
   res.send('test');
