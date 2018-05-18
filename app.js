@@ -67,7 +67,7 @@ var oauthApi = new OAuth(wx.appId, wx.appSecret, function (openid, callback) {
  */
 function sendAlarm(alarm, users) {
   let curtime = new Date().toLocaleString();
-  console.error('SendAlarm', curtime);
+  console.error('SendAlarm', curtime, '---------------------');
   
   users.forEach( function(user) {
     if(!user.openid)  return;
@@ -97,7 +97,7 @@ function sendAlarm(alarm, users) {
        }
     };
     wechatApi.sendTemplate(user.openid, templateId, url, data, function(err, result) {
-      //console.log('sendTemplate err+result:', err, result)
+      console.log('Send', user.mobile, result);
     })
   });
 }
@@ -184,7 +184,7 @@ app.post('/bind', function (req, res, next) {
   
   // VALID captcha
   db.query(captchaSql.getCaptcha, [mobile,captcha], function (err, results) {
-    console.log('results', err, results);
+    // console.log('results', err, results);
     if(err) return next(err);    
     if(!results.length) {
       let error = '验证码无效';
@@ -285,7 +285,7 @@ app.post('/sendsms', function (req, res, next) {
   
   // Save to db
   db.query(captchaSql.upsert, [mobile,captcha,expire,captcha,expire], function (err, results) {
-    console.log('results', err, results);
+    //console.log('results', err, results);
     if(err) return next(err);
   });
   
@@ -305,7 +305,7 @@ app.post('/firealarm', function (req, res, next) {
   alarm.status = req.body.status || '默认参数超标！';
   
   // 验证 token 正确
-  if( !token) {
+  if( token != '20180516') {
     res.sendStatus(401);
   }
   
@@ -322,10 +322,10 @@ app.post('/firealarm', function (req, res, next) {
   console.log('dry_mobs', dry_mobs);
   
   // 查询并发送报警
-  db.query(userSql.getUsersByMobile, [dry_mobs], function (err, results) {
-      //console.log('users:', err, results);
+  db.query(userSql.getUsersByMobile, [dry_mobs], function (err, users) {
+      //console.log('users:', err, users);
 			if(err) return	next(err);
-      sendAlarm(alarm, results);
+      sendAlarm(alarm, users);
       
       res.send('success!');
   });
@@ -333,9 +333,9 @@ app.post('/firealarm', function (req, res, next) {
 
 app.get('/test', function (req, res) {
   let alarm = {
-    store: '闵行1店',
-    device: '压缩机',
-    status: '压力报警',
+    store: 'TEST1店',
+    device: 'TEST压缩机',
+    status: 'TEST压力报警',
   };
   sendAlarm(alarm, users);
   res.send('test');
