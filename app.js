@@ -327,7 +327,7 @@ app.post('/sendsms', function (req, res, next) {
 app.post('/fire/alarm', function (req, res, next) {
   let token = (req.body.token || '').trim();
   let mobile = (req.body.mobile || '').trim();
-  console.log('token & mobile:', token, mobile);
+  console.log('Recv mobiles:', mobile);
   
   let alarm = {};
   alarm.store = req.body.store || '默认1店';
@@ -356,8 +356,17 @@ app.post('/fire/alarm', function (req, res, next) {
   db.query(userSql.getUsersByMobile, [dry_mobs], function (err, users) {
     //console.log('users:', err, users);
     if(err) return	next(err);
+    
     sendAlarm(alarm, users);
-    res.send('success!');
+    let to_mobiles = users.map(function(u) {
+      return u.mobile;
+    });
+    
+    res.send({
+      err: 0,
+      msg: 'success',
+      to_mobiles,
+    });
   });
 });
 
