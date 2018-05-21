@@ -12,7 +12,7 @@ const schedule = require('node-schedule');
 var config = require('./db/config');
 var userSql = require('./db/user_sql');
 var captchaSql = require('./db/captcha_sql');
-var db = mysql.createConnection(config.mysql);
+var db = mysql.createPool(config.mysql);
 
 const app = express();
 
