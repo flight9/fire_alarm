@@ -10,7 +10,7 @@ const schedule = require('node-schedule');
 
 // setup Mysql
 var config = require('./db/config');
-var userSql = require('./db/user_sql');
+var fireUsers = require('./db/fire_users');
 var captchaSql = require('./db/captcha_sql');
 var db = mysql.createPool(config.mysql);
 
@@ -171,7 +171,7 @@ app.get('/fire/bind', function (req, res, next) {
     if(!openid)  return res.status(401).send('微信id获取错误！');
     
     // 查询用户绑定
-    db.query(userSql.getUserByOpenid, [openid], function (err, users) {
+    db.query(fireUsers.getUserByOpenid, [openid], function (err, users) {
       //console.log('users:', err, users);
 			if(err) return next(err);
       let bound = (users.length > 0);
@@ -220,7 +220,7 @@ app.post('/fire/bind', function (req, res, next) {
     
     // Bind or Unbind
     if(tobind) {
-      db.query(userSql.getUserByMobile, [mobile], function (err, results) {
+      db.query(fireUsers.getUserByMobile, [mobile], function (err, results) {
         //console.log('results', err, results);
         if(err) return next(err);
         if(results.length > 0) {
@@ -228,7 +228,7 @@ app.post('/fire/bind', function (req, res, next) {
           res.redirect('/result?ok=0&err='+error);
         }
         else {
-          db.query(userSql.create, [mobile, openid], function (err, okPacket) {
+          db.query(fireUsers.create, [mobile, openid], function (err, okPacket) {
             //console.log('okPacket', err, okPacket);
             if(err) return next(err);
             if( okPacket.affectedRows == 1) {
@@ -244,7 +244,7 @@ app.post('/fire/bind', function (req, res, next) {
       });
     }
     else {
-      db.query(userSql.delUserByMobile, [mobile], function (err, okPacket) {
+      db.query(fireUsers.delUserByMobile, [mobile], function (err, okPacket) {
         //console.log('okPacket', err, okPacket);
         if(err) return next(err);
         if( okPacket.affectedRows == 1) {
@@ -353,7 +353,7 @@ app.post('/fire/alarm', function (req, res, next) {
   //console.log('dry_mobs', dry_mobs);
   
   // 查询并发送报警
-  db.query(userSql.getUsersByMobile, [dry_mobs], function (err, users) {
+  db.query(fireUsers.getUsersByMobile, [dry_mobs], function (err, users) {
     //console.log('users:', err, users);
     if(err) return	next(err);
     
