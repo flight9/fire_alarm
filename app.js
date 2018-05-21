@@ -34,7 +34,7 @@ http.createServer(app).listen(3119, function () {
  * 全局变量
  */
 //oW6aH0fY6upkzy6H9OA70WC3pclI (lmm)
-const WX_WEB_URL = 'http://2whzur.natappfree.cc';
+const WX_WEB_URL = 'http://va8gw9.natappfree.cc';
 const WX_MSG_URL = 'http://weixin.qq.com';
 const MAX_SMS_COUNT = 10;
 var users = require('./users');
@@ -151,8 +151,8 @@ app.get('/', function (req, res, next) {
 /**
  * 微信网页入口
  */
-app.get('/start', function (req, res, next) {
-  var callbackURL = WX_WEB_URL + '/bind';
+app.get('/fire/start', function (req, res, next) {
+  var callbackURL = WX_WEB_URL + '/fire/bind';
   var url = oauthApi.getAuthorizeURL(callbackURL,'state','snsapi_base');
   res.redirect(url);
 });
@@ -160,7 +160,7 @@ app.get('/start', function (req, res, next) {
 /**
  * 绑定表单
  */
-app.get('/bind', function (req, res, next) {
+app.get('/fire/bind', function (req, res, next) {
   var code = req.query.code;
   if(!code)  return res.sendStatus(401);
 	
@@ -186,7 +186,7 @@ app.get('/bind', function (req, res, next) {
 /**
  * 绑定表单(提交)
  */
-app.post('/bind', function (req, res, next) {
+app.post('/fire/bind', function (req, res, next) {
   let tobind = (req.body.tobind == 'true');
   let mobile = (req.body.mobile || '').trim();
   let captcha = (req.body.captcha || '').trim();
@@ -324,7 +324,7 @@ app.post('/sendsms', function (req, res, next) {
 /**
  * 发送报警对外 API 接口
  */
-app.post('/firealarm', function (req, res, next) {
+app.post('/fire/alarm', function (req, res, next) {
   let token = (req.body.token || '').trim();
   let mobile = (req.body.mobile || '').trim();
   console.log('token & mobile:', token, mobile);
