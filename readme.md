@@ -16,4 +16,4 @@ module.exports = {
   AccessKeySecret: 'xxxx'
 };
 ```
-- mysql 表: users, captchas
+- mysql 表: fire_users, captchas
