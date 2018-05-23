@@ -34,7 +34,6 @@ http.createServer(app).listen(3119, function () {
  * 全局变量
  */
 //oW6aH0fY6upkzy6H9OA70WC3pclI (lmm)
-const WX_WEB_URL = 'http://va8gw9.natappfree.cc';
 const WX_MSG_URL = 'http://weixin.qq.com';
 const MAX_SMS_COUNT = 10;
 var users = require('./users');
@@ -87,37 +86,13 @@ var oauthApi = new OAuth(wx.appId, wx.appSecret, function (openid, callback) {
  */
 function sendAlarm(alarm, users) {
   let curtime = new Date().toLocaleString();
-  console.error('SendAlarm', curtime, '---------------------');
+  console.error('SendAlarm', curtime, alarm.type, '--------------------');
   
   users.forEach( function(user) {
     if(!user.openid)  return;
     
-    var templateId = wx.tmpIdFireAlarm;
-    var url = WX_MSG_URL;
-    var time = alarm.time || new Date().toLocaleString();
-    var data = {
-      "first":{
-       "value": '你好, 报警时间 '+ time,
-       "color": "#173177"
-       },
-       "keyword1":{
-       "value": alarm.store,
-       "color": "#173177"
-       },
-       "keyword2": {
-       "value": alarm.device,
-       "color": "#173177"
-       },
-       "keyword3": {
-       "value": alarm.status,
-       "color":"#173177"
-       },
-       "remark":{
-       "value": '请关注！',
-       "color":"#173177"
-       }
-    };
-    wechatApi.sendTemplate(user.openid, templateId, url, data, function(err, result) {
+    wechatApi.sendTemplate(user.openid, alarm.templateId, 
+      alarm.url, alarm.data, function(err, result) {
       console.log('Send', user.mobile, result);
     })
   });
@@ -152,7 +127,7 @@ app.get('/', function (req, res, next) {
  * 微信网页入口
  */
 app.get('/fire/start', function (req, res, next) {
-  var callbackURL = WX_WEB_URL + '/fire/bind';
+  var callbackURL = wx.webUrl + '/fire/bind';
   var url = oauthApi.getAuthorizeURL(callbackURL,'state','snsapi_base');
   res.redirect(url);
 });
@@ -322,19 +297,13 @@ app.post('/sendsms', function (req, res, next) {
 });
 
 /**
- * 发送报警对外 API 接口
+ * 消防报警对外 API 接口
  */
 app.post('/fire/alarm', function (req, res, next) {
   let token = (req.body.token || '').trim();
   let mobile = (req.body.mobile || '').trim();
   console.log('Recv mobiles:', mobile);
-  
-  let alarm = {};
-  alarm.store = req.body.store || '默认1店';
-  alarm.device = req.body.device || '默认设备';
-  alarm.status = req.body.status || '默认参数超标！';
-  alarm.time = req.body.time;
-  
+    
   // 验证 token 正确
   if( token != '20180516') {
     return res.sendStatus(401);
@@ -344,13 +313,45 @@ app.post('/fire/alarm', function (req, res, next) {
     return res.sendStatus(500);
   }
   
+  // 收集整理数据
+  let store = req.body.store || '默认1店';
+  let device = req.body.device || '默认设备';
+  let status = req.body.status || '默认参数超标！';
+  let time = req.body.time || new Date().toLocaleString();
+  
+  let alarm = {};
+  alarm.templateId = wx.tmpIdFireAlarm;;
+  alarm.url = WX_MSG_URL;
+  alarm.data = {
+    "first":{
+    "value": '你好, 报警时间 '+ time,
+    "color": "#173177"
+    },
+    "keyword1":{
+    "value": store,
+    "color": "#173177"
+    },
+    "keyword2": {
+    "value": device,
+    "color": "#173177"
+    },
+    "keyword3": {
+    "value": status,
+    "color":"#173177"
+    },
+    "remark":{
+    "value": '请关注！',
+    "color":"#173177"
+    }
+  };
+  alarm.type = 'fire_alarm';
+  
   // 处理批量手机号码
   //mobile = '13011112222';
   let mobiles = mobile.split(',');
   let dry_mobs = mobiles.map( (m) => {
     return m.trim();
   });
-  //console.log('dry_mobs', dry_mobs);
   
   // 查询并发送报警
   db.query(fireUsers.getUsersByMobile, [dry_mobs], function (err, users) {
@@ -371,12 +372,38 @@ app.post('/fire/alarm', function (req, res, next) {
 });
 
 app.get('/test', function (req, res) {
-  let alarm = {
-    store: 'TEST1店',
-    device: 'TEST压缩机',
-    status: 'TEST压力报警',
-    time: new Date().toLocaleString(),
+  let store = 'TEST1店';
+  let device = 'TEST压缩机';
+  let status = 'TEST压力报警';
+  let time = new Date().toLocaleString();
+  
+  let alarm = {};
+  alarm.templateId = wx.tmpIdFireAlarm;;
+  alarm.url = WX_MSG_URL;
+  alarm.data = {
+    "first":{
+    "value": '你好, 报警时间 '+ time,
+    "color": "#173177"
+    },
+    "keyword1":{
+    "value": store,
+    "color": "#173177"
+    },
+    "keyword2": {
+    "value": device,
+    "color": "#173177"
+    },
+    "keyword3": {
+    "value": status,
+    "color":"#173177"
+    },
+    "remark":{
+    "value": '请关注！',
+    "color":"#173177"
+    }
   };
+  alarm.type = 'fire_alarm';
+  
   sendAlarm(alarm, users);
   res.send('test');
 });
