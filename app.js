@@ -31,7 +31,7 @@ http.createServer(app).listen(3119, function () {
 });
 
 /**
- * 全局变量
+ * 全局变量 Global Variables
  */
 //oW6aH0fY6upkzy6H9OA70WC3pclI (lmm)
 const WX_MSG_URL = 'http://weixin.qq.com';
@@ -45,7 +45,7 @@ const secretAccessKey = ali.AccessKeySecret;
 const smsClient = new SMSClient({accessKeyId, secretAccessKey});
 
 /**
- * 定时清理
+ * 定时清理 Schedule of clean
  */
 var j = schedule.scheduleJob('5 2 * * *', function(){
   console.log('Schedule run at', new Date().toLocaleString(), '-----------');
@@ -55,7 +55,7 @@ var j = schedule.scheduleJob('5 2 * * *', function(){
 });
 
 /**
- * 微信 API 初始化
+ * 微信 API 初始化 Setup Wechat API
  */
 let wx = require('./wxconfig');
 let appId = wx.appId; 
@@ -82,7 +82,7 @@ var oauthApi = new OAuth(wx.appId, wx.appSecret, function (openid, callback) {
 })
 
 /**
- * 发送报警 
+ * 发送报警 Send Alarm
  */
 function sendAlarm(alarm, users) {
   let curtime = new Date().toLocaleString();
@@ -99,7 +99,7 @@ function sendAlarm(alarm, users) {
 }
 
 /**
- * 验证手机号码格式
+ * 验证手机号码格式 Verify Mobile
  */
 function validMobile(number) {
   if(!number) return false;
@@ -107,7 +107,7 @@ function validMobile(number) {
 }
 
 /**
- * 计算随机验证码
+ * 计算随机验证码 Make Captcha
  */
 function random(len) {
   len = len || 4;
@@ -124,7 +124,7 @@ app.get('/', function (req, res, next) {
 });
 
 /**
- * 微信网页入口
+ * 微信网页入口 Wechat Entrance
  */
 app.get('/fire/start', function (req, res, next) {
   var callbackURL = wx.webUrl + '/fire/bind';
@@ -133,7 +133,7 @@ app.get('/fire/start', function (req, res, next) {
 });
 
 /**
- * 绑定表单
+ * 绑定表单 Bind Form
  */
 app.get('/fire/bind', function (req, res, next) {
   var code = req.query.code;
@@ -159,7 +159,7 @@ app.get('/fire/bind', function (req, res, next) {
 });
 
 /**
- * 绑定表单(提交)
+ * 绑定表单(提交) Bind Form Submit
  */
 app.post('/fire/bind', function (req, res, next) {
   let tobind = (req.body.tobind == 'true');
@@ -239,7 +239,7 @@ app.post('/fire/bind', function (req, res, next) {
 });
 
 /**
- * 操作结果
+ * 操作结果 Result Page
  */
 app.get('/result', function (req, res, next) {
   let ok = req.query.ok > 0? true: false;
@@ -248,7 +248,7 @@ app.get('/result', function (req, res, next) {
 });
 
 /**
- * 发送验证码
+ * 发送验证码 Send SMS Captcha
  */
 app.post('/sendsms', function (req, res, next) {
   let mobile = (req.body.mobile || '').trim();
@@ -297,7 +297,7 @@ app.post('/sendsms', function (req, res, next) {
 });
 
 /**
- * 消防报警对外 API 接口
+ * 消防报警对外 API 接口 Firealarm API
  */
 app.post('/fire/alarm', function (req, res, next) {
   let token = (req.body.token || '').trim();
